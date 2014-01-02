@@ -1,0 +1,91 @@
+
+var moveChart = dc.lineChart("#monthly-move-chart");
+d3.csv("table.csv", function (data) {
+	console.log(JSON.stringify(data)+"I am here");
+  var dateFormat = d3.time.format("%Y-%m-%d");
+  var numberFormat = d3.format(".2f");
+data.forEach(function (d) {
+        d.dd = dateFormat.parse(d.Date);
+        d.close = +d.Close; // coerce to number
+        d.open = +d.Open;
+        d.high= +d.High;
+        d.low= +d.Low;
+        d.volume=+d.Volume;
+        d.adjclose=+d["Adj Close"];
+        
+    });	
+       var ndx = crossfilter(data);
+       var all = ndx.groupAll();
+        var dateDimension = ndx.dimension(function (d) {
+        return d.dd;
+    });
+     var openByDayGroup = dateDimension.group().reduce(function(d){
+     return d.open;
+     })
+    var closeByDayGroup = dateDimension.group().reduce(function(d){
+     return d.close;
+     })
+        
+        moveChart
+        .renderArea(true)
+        .width(990)
+        .height(200)
+        .transitionDuration(1000)
+        .margins({top: 30, right: 50, bottom: 25, left: 40})
+        .dimension(dateDimension)
+        .mouseZoomable(true)
+        .x(d3.time.scale().domain([new Date(2000, 0, 1), new Date(2010, 0, 31)]))
+        .xUnits(d3.time.months)
+        .elasticY(true)
+        .renderHorizontalGridLines(true)
+        .legend(dc.legend().x(800).y(10).itemHeight(13).gap(5))
+        .brushOn(false)
+        .group(openByDayGroup, "Open")
+        .valueAccessor(function (d) {
+            return d.value.open;
+        }) .stack(closeByDayGroup, "Close", function (d) {
+            return d.value;
+        }) .title(function (d) {
+            var value =  d.value;
+            if (isNaN(value)) value = 0;
+            return dateFormat(d.key) + "\n" + numberFormat(value);
+        });
+        dc.dataCount(".dc-data-count")
+        .dimension(ndx)
+        .group(all);
+        dc.dataTable(".dc-data-table")
+        .dimension(dateDimension)
+         .group(function (d) {
+            var format = d3.format("02d");
+            return d.dd.getFullYear() + "/" + format((d.dd.getMonth() + 1));
+        })
+        .size(10).columns([
+            function (d) {
+                return d.date;
+            },
+            function (d) {
+                return numberFormat(d.open);
+            },
+            function (d) {
+                return numberFormat(d.close);
+            },
+            function (d) {
+                return numberFormat(d.high);
+            },
+            function (d) {
+                return numberFormat(d.low);
+            },
+            function (d) {
+                return d.volume;
+            },
+            function (d) {
+                return d.adjclose;
+            }
+        ]).sortBy(function (d) {
+            return d.dd;
+        }).order(d3.ascending).renderlet(function (table) {
+            table.selectAll(".dc-table-group").classed("info", true);
+        });
+
+        
+     });

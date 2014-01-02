@@ -1,0 +1,19 @@
+#tableentries{
+    table-layout: fixed;
+    width: 1050px;
+}
+
+#tableentries th, td {
+    overflow: hidden;
+    width: 150px;
+}
+input.tablesorter-filter{
+	width: 120px;
+}
+.navbar-fixed-bottom{
+	padding-top:1em;
+	background-color: rgba(255,255,255,.8);
+	font-size: 14px;
+	text-align:center;
+	cursor:pointer;
+}
